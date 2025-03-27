@@ -17,6 +17,7 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
         {
             _db = db;
         }
+
         [HttpGet("{id}")]
         public ActionResult<PaymentDetailDto> GetPayment(int id)
         {
@@ -41,11 +42,11 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
             }
             return Ok(payment);
         }
+
         [HttpGet]
-       public ActionResult<List<PaymentDto>> GetPayments(
-    [FromQuery] int? cashDesk,
-    [FromQuery] DateTime? dateFrom
-)
+        public ActionResult<List<PaymentDto>> GetPayments(
+            [FromQuery] int? cashDesk,
+            [FromQuery] DateTime? dateFrom)
         {
             IQueryable<Payment> query = _db.Payments;
 
@@ -193,5 +194,115 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
             }
         }
 
+        [HttpPut("paymentItems/{id}")]
+        public ActionResult UpdatePaymentItem(int id, [FromBody] UpdatePaymentItemCommand command)
+        {
+            // Validate routing ID matches payload ID
+            if (id != command.Id)
+            {
+                return BadRequest(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Invalid payment item ID",
+                    detail: "The ID in the route does not match the ID in the payload."));
+            }
+
+            // Find existing payment item
+            var existingPaymentItem = _db.PaymentItems
+                .FirstOrDefault(pi => pi.Id == id);
+
+            if (existingPaymentItem == null)
+            {
+                return NotFound(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Payment Item not found",
+                    detail: $"Payment Item with ID {id} could not be found."));
+            }
+
+            // Check for concurrent modification
+            if (existingPaymentItem.LastUpdated != command.LastUpdated)
+            {
+                return BadRequest(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Payment item has changed",
+                    detail: "The payment item has been modified by another user."));
+            }
+
+            // Validate payment exists
+            var payment = _db.Payments.FirstOrDefault(p => p.Id == command.PaymentId);
+            if (payment == null)
+            {
+                return BadRequest(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Invalid payment ID",
+                    detail: $"Payment with ID {command.PaymentId} could not be found."));
+            }
+
+            // Update payment item
+            existingPaymentItem.ArticleName = command.ArticleName;
+            existingPaymentItem.Amount = command.Amount;
+            existingPaymentItem.Price = command.Price;
+            existingPaymentItem.LastUpdated = DateTime.UtcNow;
+
+            try
+            {
+                _db.SaveChanges();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Error updating payment item",
+                    detail: ex.Message));
+            }
+        }
+
+        [HttpPatch("{id}")]
+        public ActionResult UpdatePaymentConfirmation(int id, [FromBody] UpdateConfirmedCommand command)
+        {
+            // Find existing payment
+            var payment = _db.Payments.FirstOrDefault(p => p.Id == id);
+
+            if (payment == null)
+            {
+                return NotFound(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Payment not found",
+                    detail: $"Payment with ID {id} could not be found."));
+            }
+
+            // Check if already confirmed
+            if (payment.Confirmed.HasValue)
+            {
+                return BadRequest(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Payment already confirmed",
+                    detail: "This payment has already been confirmed."));
+            }
+
+            // Update payment confirmation
+            payment.Confirmed = command.Confirmed ?? DateTime.UtcNow;
+
+            try
+            {
+                _db.SaveChanges();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Error updating payment confirmation",
+                    detail: ex.Message));
+            }
+        }
     }
 }
