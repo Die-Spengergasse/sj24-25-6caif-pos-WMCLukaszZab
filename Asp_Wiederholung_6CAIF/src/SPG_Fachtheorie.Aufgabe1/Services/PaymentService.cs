@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using SPG_Fachtheorie.Aufgabe1.Commands;
 using SPG_Fachtheorie.Aufgabe1.Model;
+using SPG_Fachtheorie.Aufgabe1.Infrastructure;
 
 public class PaymentServiceException : Exception
 {
@@ -11,11 +12,11 @@ public class PaymentServiceException : Exception
 
 public class PaymentService
 {
-    private readonly PaymentContext _context;
+    private readonly AppointmentContext _context;
 
     public IQueryable<Payment> Payments => _context.Payments;
 
-    public PaymentService(PaymentContext context)
+    public PaymentService(AppointmentContext context)
     {
         _context = context;
     }
@@ -28,7 +29,7 @@ public class PaymentService
         if (existingPayment != null)
             throw new PaymentServiceException("Open payment for cashdesk.");
 
-        var employee = _context.Employees.Find(cmd.EmployeeId);
+        var employee = _context.Employees.Find(cmd.EmployeeRegistrationNumber);
         if (cmd.PaymentType == PaymentType.CreditCard && employee?.Type != "Manager")
             throw new PaymentServiceException("Insufficient rights to create a credit card payment.");
 
@@ -36,7 +37,7 @@ public class PaymentService
         {
             CashDesk = _context.CashDesks.Find(cmd.CashDeskNumber),
             Employee = employee,
-            PaymentType = cmd.PaymentType,
+            PaymentType = cmd.PaymentType
             PaymentDateTime = DateTime.UtcNow,
             Confirmed = null
         };
