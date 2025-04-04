@@ -34,9 +34,9 @@ namespace SPG_Fachtheorie.Aufgabe1.Test
         {
             // ARRANGE
             using var db = GetEmptyDbContext();
-            var cashier = new Cashier(1, "fn", "ln", null, "Wursttheke");
+            var cashier = new Cashier(1, "fn", "ln", new DateOnly(2000, 1, 1), 3000, null, "Wursttheke");
             db.Cashiers.Add(cashier);
-            
+
             // ACT
             db.SaveChanges();   // erst hier wird das INSERT INTO gesendet.
 
@@ -51,9 +51,9 @@ namespace SPG_Fachtheorie.Aufgabe1.Test
         {
             // ARRANGE
             using var db = GetEmptyDbContext();
-            var employee = new Cashier(1001, "fn", "ln", null, "Kassier");
+            var employee = new Cashier(1001, "fn", "ln", new DateOnly(2000, 1, 1), 3000, null, "Kassier");
             var cashDesk = new CashDesk(1);
-            var payment = new Payment(cashDesk, new DateTime(2025, 2, 21), employee);
+            var payment = new Payment(cashDesk, new DateTime(2025, 2, 21), employee, PaymentType.Cash);
             db.Payments.Add(payment);
 
             // ACT
@@ -70,7 +70,7 @@ namespace SPG_Fachtheorie.Aufgabe1.Test
         {
             // ARRANGE
             using var db = GetEmptyDbContext();
-            var manager = new Manager(1001, "fn", "ln", null, "BMW X7");
+            var manager = new Manager(1001, "fn", "ln", new DateOnly(2000, 1, 1), 3000, null, "BMW X7");
             db.Managers.Add(manager);
 
             // ACT
