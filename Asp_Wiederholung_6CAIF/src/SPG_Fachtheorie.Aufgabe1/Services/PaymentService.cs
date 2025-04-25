@@ -24,20 +24,31 @@ public class PaymentService
     public Payment CreatePayment(NewPaymentCommand cmd)
     {
         var existingPayment = _context.Payments
-            .FirstOrDefault(p => p.CashDesk.Number == cmd.CashDeskNumber && p.Confirmed == null);
+             .FirstOrDefault(p => p.CashDesk.Number == cmd.CashDeskNumber && p.Confirmed == null);
 
         if (existingPayment != null)
             throw new PaymentServiceException("Open payment for cashdesk.");
 
+        var cashDesk = _context.CashDesks.Find(cmd.CashDeskNumber);
+        if (cashDesk == null)
+            throw new PaymentServiceException("Cash desk not found.");
+
         var employee = _context.Employees.Find(cmd.EmployeeRegistrationNumber);
-        if (cmd.PaymentType == PaymentType.CreditCard && employee?.Type != "Manager")
+        if (Enum.TryParse<PaymentType>(cmd.PaymentType, true, out var paymentType) &&
+                paymentType == PaymentType.CreditCard &&
+                employee?.Type != "Manager")
+        {
             throw new PaymentServiceException("Insufficient rights to create a credit card payment.");
+        }
+
+        if (employee == null)
+            throw new PaymentServiceException("Employee not found.");
 
         var payment = new Payment
         {
-            CashDesk = _context.CashDesks.Find(cmd.CashDeskNumber),
+            CashDesk = cashDesk,
             Employee = employee,
-            PaymentType = cmd.PaymentType
+            PaymentType = Enum.Parse<PaymentType>(cmd.PaymentType, true),
             PaymentDateTime = DateTime.UtcNow,
             Confirmed = null
         };
@@ -95,5 +106,10 @@ public class PaymentService
 
         _context.Payments.Remove(payment);
         _context.SaveChanges();
+    }
+
+    public void SaveChanges()
+    {
+        throw new NotImplementedException();
     }
 }
