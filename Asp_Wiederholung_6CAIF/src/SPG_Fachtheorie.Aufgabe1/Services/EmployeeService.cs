@@ -26,7 +26,7 @@ namespace SPG_Fachtheorie.Aufgabe1.Services
             // werden.
             if (DateTime.Now.Year - cmd.Birthdate.Year < 30 && cmd.Salary > 4000)
                 throw new EmployeeServiceException($"Invalid salary for Employee {cmd.LastName}.");
-            if (_db.Managers.Count() > 3)
+            if (_db.Managers.Count() >= 3)
                 throw new EmployeeServiceException($"Only 3 managers are allowed.");
             
             var manager = new Manager(

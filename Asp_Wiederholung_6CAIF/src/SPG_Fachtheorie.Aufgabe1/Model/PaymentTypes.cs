@@ -2,8 +2,8 @@
 {
     public enum PaymentType
     {  
-        Cash,
-        Maestro,
-        CreditCard
+        Cash,         // 0
+        Maestro,      // 1
+        CreditCard    // 2
     }
 }

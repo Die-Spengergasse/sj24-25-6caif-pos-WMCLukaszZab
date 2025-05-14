@@ -6,7 +6,7 @@ namespace SPG_Fachtheorie.Aufgabe1.Model
     public class PaymentItem
     {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
-        public PaymentItem() { }
+        protected PaymentItem() { }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
         public PaymentItem(string articleName, int amount, decimal price, Payment payment)
         {
